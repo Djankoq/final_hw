@@ -6,6 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import ru.example.crawler.service.ContactCrawlerService;
 import ru.example.crawler.task.CounterWorker;
 import ru.example.crawler.task.LoggerTask;
+import ru.example.crawler.task.ThreadStatesDemo;
 
 @SpringBootApplication
 public class ContactCrawlerApplication implements CommandLineRunner {
@@ -23,6 +24,7 @@ public class ContactCrawlerApplication implements CommandLineRunner {
     @Override
     public void run(String... args) throws InterruptedException {
         System.out.println(crawlerService.describe());
+        new ThreadStatesDemo().run();
 
         Thread counterWorker = new CounterWorker(5);
         Thread loggerThread = new Thread(new LoggerTask(5), "LoggerThread");
