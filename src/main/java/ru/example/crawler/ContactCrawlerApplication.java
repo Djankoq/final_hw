@@ -7,6 +7,7 @@ import ru.example.crawler.service.ContactCrawlerService;
 import ru.example.crawler.task.CounterWorker;
 import ru.example.crawler.task.LoggerTask;
 import ru.example.crawler.task.ThreadStatesDemo;
+import ru.example.crawler.task.StreamPerformanceDemo;
 
 @SpringBootApplication
 public class ContactCrawlerApplication implements CommandLineRunner {
@@ -25,6 +26,7 @@ public class ContactCrawlerApplication implements CommandLineRunner {
     public void run(String... args) throws InterruptedException {
         System.out.println(crawlerService.describe());
         new ThreadStatesDemo().run();
+        new StreamPerformanceDemo().run();
 
         Thread counterWorker = new CounterWorker(5);
         Thread loggerThread = new Thread(new LoggerTask(5), "LoggerThread");
