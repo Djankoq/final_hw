@@ -8,6 +8,7 @@ import ru.example.crawler.task.CounterWorker;
 import ru.example.crawler.task.LoggerTask;
 import ru.example.crawler.task.ThreadStatesDemo;
 import ru.example.crawler.task.StreamPerformanceDemo;
+import ru.example.crawler.task.BankPerformanceDemo;
 
 @SpringBootApplication
 public class ContactCrawlerApplication implements CommandLineRunner {
@@ -23,10 +24,11 @@ public class ContactCrawlerApplication implements CommandLineRunner {
     }
 
     @Override
-    public void run(String... args) throws InterruptedException {
+    public void run(String... args) throws Exception {
         System.out.println(crawlerService.describe());
         new ThreadStatesDemo().run();
         new StreamPerformanceDemo().run();
+        new BankPerformanceDemo().run();
 
         Thread counterWorker = new CounterWorker(5);
         Thread loggerThread = new Thread(new LoggerTask(5), "LoggerThread");
