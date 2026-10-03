@@ -10,6 +10,8 @@ import ru.example.crawler.task.ThreadStatesDemo;
 import ru.example.crawler.task.StreamPerformanceDemo;
 import ru.example.crawler.task.BankPerformanceDemo;
 import ru.example.crawler.task.HttpRequestsDemo;
+import ru.example.crawler.task.ExecutorTasksDemo;
+import ru.example.crawler.service.PeriodicDataAggregator;
 
 import java.util.Arrays;
 
@@ -28,6 +30,14 @@ public class ContactCrawlerApplication implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
+        if (args.length > 0 && "--executors".equals(args[0])) {
+            ExecutorTasksDemo.main(Arrays.copyOfRange(args, 1, args.length));
+            return;
+        }
+        if (args.length > 0 && "--aggregator".equals(args[0])) {
+            PeriodicDataAggregator.main(Arrays.copyOfRange(args, 1, args.length));
+            return;
+        }
         if (args.length > 0 && "--http".equals(args[0])) {
             HttpRequestsDemo.main(Arrays.copyOfRange(args, 1, args.length));
             return;
