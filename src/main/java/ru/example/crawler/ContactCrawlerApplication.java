@@ -9,6 +9,9 @@ import ru.example.crawler.task.LoggerTask;
 import ru.example.crawler.task.ThreadStatesDemo;
 import ru.example.crawler.task.StreamPerformanceDemo;
 import ru.example.crawler.task.BankPerformanceDemo;
+import ru.example.crawler.task.HttpRequestsDemo;
+
+import java.util.Arrays;
 
 @SpringBootApplication
 public class ContactCrawlerApplication implements CommandLineRunner {
@@ -25,6 +28,10 @@ public class ContactCrawlerApplication implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
+        if (args.length > 0 && "--http".equals(args[0])) {
+            HttpRequestsDemo.main(Arrays.copyOfRange(args, 1, args.length));
+            return;
+        }
         System.out.println(crawlerService.describe());
         new ThreadStatesDemo().run();
         new StreamPerformanceDemo().run();

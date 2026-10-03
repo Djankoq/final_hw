@@ -1,5 +1,52 @@
 # Каркас краулера контактных данных
 
+## Асинхронные HTTP-запросы с ThreadPoolExecutor
+
+[HttpRequestsDemo](src/main/java/ru/example/crawler/task/HttpRequestsDemo.java) принимает список
+URL и отправляет GET-запросы асинхронно относительно вызывающего потока. Каждый HTTP-вызов
+`HttpClient.send()` выполняется в собственном, вручную созданном `ThreadPoolExecutor`.
+`fetchAll()` сразу возвращает `CompletableFuture<Summary>`; результаты сохраняют порядок
+входного списка, включая повторяющиеся URL.
+
+Настройки пула: `corePoolSize=4`, `maximumPoolSize=8`, `keepAliveTime=30 секунд`,
+ограниченная очередь `ArrayBlockingQueue(16)`, имена потоков `http-worker-N`,
+политика отклонения `AbortPolicy`. Сначала создаются основные потоки, затем заполняется
+очередь, после её заполнения пул растёт до максимума. Переполнение очереди попадает
+в сводку как ошибка соответствующего URL. Параметры можно изменить через конструктор.
+Таймаут подключения и запроса — 10 секунд; разрешены HTTP/HTTPS и обычные перенаправления.
+
+Запуск без Maven (JDK 17+), по умолчанию — 20 URL демонстрационного API JSONPlaceholder:
+
+```shell
+java --source 17 src/main/java/ru/example/crawler/task/HttpRequestsDemo.java
+```
+
+Передача своего списка или UTF-8 файла (по одному URL на строку, пустые строки и комментарии `#` пропускаются):
+
+```shell
+java --source 17 src/main/java/ru/example/crawler/task/HttpRequestsDemo.java https://example.com https://example.org
+java --source 17 src/main/java/ru/example/crawler/task/HttpRequestsDemo.java --file urls.txt
+```
+
+Запуск через Spring Boot:
+
+```shell
+mvn spring-boot:run "-Dspring-boot.run.arguments=--http"
+mvn spring-boot:run "-Dspring-boot.run.arguments=--http --file urls.txt"
+mvn test
+```
+
+Сводка содержит URL, HTTP-статус, время каждого запроса, текст сетевой ошибки или таймаута,
+число успешных ответов 2xx, ответов вне 2xx и ошибок, распределение статус-кодов,
+общее время и min/avg/max времени HTTP-ответов. Время измеряется через `System.nanoTime()`
+от начала выполнения задачи до получения ответа и завершения чтения тела; ожидание в очереди
+не входит во время отдельного запроса. Тела ответов отбрасываются. Общее время включает
+очередь и выполнение всех задач. Пул закрывается через `shutdown()`/`awaitTermination()`,
+при необходимости — `shutdownNow()`; отменённые задачи из очереди тоже получают результат.
+
+[Тесты](src/test/java/ru/example/crawler/task/HttpRequestsDemoTest.java) используют локальный
+HTTP-сервер и проверяют параллельность, статусы, ошибки URL, таймауты и сводку.
+
 ## Deadlock, Livelock и Starvation
 
 Отдельный класс [ConcurrencyProblemsDemo](src/main/java/ru/example/crawler/task/ConcurrencyProblemsDemo.java)
