@@ -4,6 +4,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import ru.example.crawler.service.ContactCrawlerService;
+import ru.example.crawler.service.AsyncDataCollector;
 import ru.example.crawler.task.CounterWorker;
 import ru.example.crawler.task.LoggerTask;
 import ru.example.crawler.task.ThreadStatesDemo;
@@ -30,6 +31,10 @@ public class ContactCrawlerApplication implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
+        if (args.length > 0 && "--completable-future".equals(args[0])) {
+            AsyncDataCollector.main(Arrays.copyOfRange(args, 1, args.length));
+            return;
+        }
         if (args.length > 0 && "--executors".equals(args[0])) {
             ExecutorTasksDemo.main(Arrays.copyOfRange(args, 1, args.length));
             return;
