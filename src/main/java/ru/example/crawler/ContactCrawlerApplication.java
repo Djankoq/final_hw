@@ -12,6 +12,7 @@ import ru.example.crawler.task.StreamPerformanceDemo;
 import ru.example.crawler.task.BankPerformanceDemo;
 import ru.example.crawler.task.HttpRequestsDemo;
 import ru.example.crawler.task.ExecutorTasksDemo;
+import ru.example.crawler.task.ForkJoinCountDemo;
 import ru.example.crawler.service.PeriodicDataAggregator;
 
 import java.util.Arrays;
@@ -31,6 +32,10 @@ public class ContactCrawlerApplication implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
+        if (args.length > 0 && "--fork-join-count".equals(args[0])) {
+            ForkJoinCountDemo.main(Arrays.copyOfRange(args, 1, args.length));
+            return;
+        }
         if (args.length > 0 && "--completable-future".equals(args[0])) {
             AsyncDataCollector.main(Arrays.copyOfRange(args, 1, args.length));
             return;

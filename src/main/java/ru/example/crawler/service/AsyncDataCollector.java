@@ -257,15 +257,20 @@ public final class AsyncDataCollector implements AutoCloseable {
         return value;
     }
 
-    public static void main(String[] args) {
-        List<String> ids = args.length == 0
-                ? List.of("org-1", "org-2", "org-3", "org-4", "org-5") : List.of(args);
-        var collector = new AsyncDataCollector(
+    /** Файловые источники и преобразование для демонстраций сбора и подсчёта данных. */
+    public static AsyncDataCollector createFileCollector() {
+        return new AsyncDataCollector(
                 id -> readProperty("organization-names.properties", id),
                 id -> readProperty("organization-ratings.properties", id), raw -> {
                     Thread.sleep(50); // Имитация блокирующего обогащения названия.
                     return normalizeName(raw);
                 }, DEFAULT_POOL_SIZE);
+    }
+
+    public static void main(String[] args) {
+        List<String> ids = args.length == 0
+                ? List.of("org-1", "org-2", "org-3", "org-4", "org-5") : List.of(args);
+        var collector = createFileCollector();
         Thread shutdownHook = new Thread(collector::close, "data-shutdown");
         Runtime.getRuntime().addShutdownHook(shutdownHook);
         try (collector) {

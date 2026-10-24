@@ -2,6 +2,7 @@ package ru.example.crawler.service;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
+import ru.example.crawler.task.AggregatedCountTask;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -11,6 +12,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -18,6 +20,25 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @Timeout(15)
 class AsyncDataCollectorTest {
+    @Test
+    void countsAggregatedResultsInForkJoinBatchesAfterSourceFailure() throws Exception {
+        ForkJoinPool pool = new ForkJoinPool(2);
+        try (var collector = new AsyncDataCollector(id -> "Company " + id, id -> {
+            if (id.equals("bad-rating")) throw new IOException("rating unavailable");
+            return "4.5";
+        })) {
+            var results = collector.fetchAllDataAsync(List.of("A", "bad-rating", "B", "A", "C"));
+            var count = pool.invoke(new AggregatedCountTask(results, 2));
+            assertEquals(List.of("A", "B", "A", "C"),
+                    results.stream().map(AsyncDataCollector.FinalResult::id).toList());
+            assertEquals(4, count.elementCount());
+            assertEquals(2, count.batchCount());
+        } finally {
+            pool.shutdownNow();
+            assertTrue(pool.awaitTermination(3, TimeUnit.SECONDS));
+        }
+    }
+
     @Test
     void combinesTransformsAndKeepsOrderAndDuplicatesDespiteFailures() {
         AsyncDataCollector.DataSource names = id -> {
