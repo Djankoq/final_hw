@@ -1,5 +1,58 @@
 # Каркас краулера контактных данных
 
+## Сервер URL-задач с BlockingQueue
+
+[UrlTaskServer](src/main/java/ru/example/crawler/service/UrlTaskServer.java) реализует
+модель Producer–Consumer: несколько производителей передают URL через общую
+`BlockingQueue<Task>`, несколько потребителей скачивают страницы и извлекают `<title>`.
+По умолчанию работают **2 производителя**, **3 потребителя**, очередь
+`ArrayBlockingQueue` вмещает **8 задач**, таймаут HTTP-запроса — **10 секунд**.
+Параметры задаются конструктором `UrlTaskServer(producers, consumers, capacity, timeout)`.
+
+1. Каждый `Producer` обрабатывает свою часть входного списка и вызывает `put()`.
+   При заполнении очереди поток ждёт свободного места, URL не отбрасываются.
+2. Каждый `Consumer` получает задачу через `take()`, ожидая появления URL без активного опроса.
+   HTTP-запросы выполняются параллельно в потоках `url-consumer-N`;
+   производители работают в отдельных потоках `url-producer-N`.
+3. Страница загружается через JDK `HttpClient`, перенаправления обрабатываются автоматически.
+   Заголовок разбирается встроенным HTML-парсером `ParserDelegator`: учитываются регистр тегов,
+   HTML-сущности и переносы строк. Дополнительные зависимости не требуются.
+4. Некорректный URL, сетевой сбой, таймаут, HTTP вне 2xx или отсутствующий/пустой
+   заголовок записываются в `Result.error`. Потребитель продолжает обработку очереди.
+5. Координатор ждёт всех производителей и добавляет по одному специальному сигналу
+   остановки на потребителя (poison pill). Сигналы идут после всех URL, поэтому очередь
+   обрабатывается полностью. Затем координатор ждёт потребителей и завершает пулы.
+   Прерывание `process()` отменяет работу обоих пулов, включая ожидание очереди и HTTP.
+
+Метод `process(List<String>)` возвращает неизменяемый список `Result` в исходном порядке.
+Каждое вхождение URL считается отдельной задачей, включая повторения.
+Результат содержит URL, HTTP-статус, заголовок, ошибку и имя потребителя.
+Очередь и пулы создаются на один вызов, поэтому один экземпляр сервера можно использовать повторно.
+
+[BlockingQueueDemo](src/main/java/ru/example/crawler/task/BlockingQueueDemo.java)
+печатает результаты и сводку. Без аргументов используется шесть публичных страниц;
+для их загрузки нужен доступ в интернет. Можно передать собственные URL или UTF-8 файл
+(один URL на строку; пустые строки и комментарии `#` пропускаются):
+
+```shell
+mvn spring-boot:run "-Dspring-boot.run.arguments=--blocking-queue"
+mvn spring-boot:run "-Dspring-boot.run.arguments=--blocking-queue https://example.com https://openjdk.org"
+mvn spring-boot:run "-Dspring-boot.run.arguments=--blocking-queue --file urls.txt"
+```
+
+После сборки доступен запуск без Spring Boot:
+
+```shell
+java -cp target/classes ru.example.crawler.task.BlockingQueueDemo https://example.com
+```
+
+Проверки в [UrlTaskServerTest](src/test/java/ru/example/crawler/service/UrlTaskServerTest.java)
+используют локальный HTTP-сервер и не зависят от доступности публичных сайтов:
+
+```shell
+mvn test
+```
+
 ## Многопоточная система событий
 
 [ConcurrentEventBus](src/main/java/ru/example/crawler/service/ConcurrentEventBus.java)
