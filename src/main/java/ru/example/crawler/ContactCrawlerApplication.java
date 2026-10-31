@@ -15,6 +15,7 @@ import ru.example.crawler.task.ExecutorTasksDemo;
 import ru.example.crawler.task.ForkJoinCountDemo;
 import ru.example.crawler.task.ConcurrentEventsDemo;
 import ru.example.crawler.task.BlockingQueueDemo;
+import ru.example.crawler.task.VirtualThreadsDemo;
 import ru.example.crawler.service.PeriodicDataAggregator;
 
 import java.util.Arrays;
@@ -34,6 +35,10 @@ public class ContactCrawlerApplication implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
+        if (args.length > 0 && "--virtual-threads".equals(args[0])) {
+            VirtualThreadsDemo.main(Arrays.copyOfRange(args, 1, args.length));
+            return;
+        }
         if (args.length > 0 && "--blocking-queue".equals(args[0])) {
             BlockingQueueDemo.main(Arrays.copyOfRange(args, 1, args.length));
             return;
